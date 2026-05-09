@@ -40,6 +40,12 @@ def init_db():
                 registered_at TEXT NOT NULL
             )
         """)
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS processed_msgs (
+                msg_id INTEGER PRIMARY KEY,
+                created_at TEXT NOT NULL
+            )
+        """)
         db.commit()
 
 
@@ -342,12 +348,23 @@ def run_bot():
                 if update.get("type") == "message_new":
                     msg = update["object"]["message"]
                     msg_id = msg.get("id")
-                    with processed_lock:
-                        if msg_id in processed_ids:
+                    if not msg_id:
+                        continue
+                    with get_db() as db:
+                        existing = db.execute(
+                            "SELECT 1 FROM processed_msgs WHERE msg_id = ?", (msg_id,)
+                        ).fetchone()
+                        if existing:
                             continue
-                        processed_ids.add(msg_id)
-                        if len(processed_ids) > 1000:
-                            processed_ids.clear()
+                        db.execute(
+                            "INSERT INTO processed_msgs (msg_id, created_at) VALUES (?, ?)",
+                            (msg_id, datetime.datetime.now().isoformat())
+                        )
+                        db.execute(
+                            "DELETE FROM processed_msgs WHERE created_at < ?",
+                            ((datetime.datetime.now() - datetime.timedelta(hours=1)).isoformat(),)
+                        )
+                        db.commit()
                     user_id = msg["from_id"]
                     text = msg.get("text", "")
                     if text:
