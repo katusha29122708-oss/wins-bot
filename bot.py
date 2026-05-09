@@ -7,7 +7,7 @@ import requests
 from groq import Groq
 
 VK_TOKEN = os.environ.get("vk1.a.RfVgt3N_nMfp3Fb_OUo2_DDJgr3UnDUAe_C5ASkDAmBXQYSJUxsIe14jhOuK6E0TfVnHUVarQYpaSkYUWc57OBo9LBV6ToRMldxGyc5pM3FXIQvkHUHi0d44MGi7oDeHfTa1hMqRrIW1jcBg1Pw7zbQ8omwIL3puIDAiGXmFdRRo9lPjDtfB1feijSuqcYIeiE1kLy-TMHUVri5pNxxaUQ")
-GROQ_API_KEY = os.environ.get("gsk_rugzLFI9Y3XQMZPnm4EqWGdyb3FYh5XN39khuUM9HIJarW8vks6cY")
+GROQ_API_KEY = os.environ.get("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")
 VK_GROUP_ID = os.environ.get("236136575")
 
 VK_API = "https://api.vk.com/method"
