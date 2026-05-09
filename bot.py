@@ -13,8 +13,8 @@ VK_API = "https://api.vk.com/method"
 VK_VERSION = "5.131"
 GROQ_API = "https://api.groq.com/openai/v1/chat/completions"
 
-processed_ids = set()
-processed_lock = threading.Lock()
+recent_messages = {}
+recent_lock = threading.Lock()
 
 
 def get_db():
@@ -348,23 +348,18 @@ def run_bot():
                 if update.get("type") == "message_new":
                     msg = update["object"]["message"]
                     msg_id = msg.get("id")
-                    if not msg_id:
-                        continue
-                    with get_db() as db:
-                        existing = db.execute(
-                            "SELECT 1 FROM processed_msgs WHERE msg_id = ?", (msg_id,)
-                        ).fetchone()
-                        if existing:
+                    user_id_check = msg.get("from_id")
+                    text_check = msg.get("text", "")
+                    dedup_key = f"{user_id_check}:{text_check}"
+                    now_ts = time.time()
+                    with recent_lock:
+                        last_time = recent_messages.get(dedup_key, 0)
+                        if now_ts - last_time < 10:
                             continue
-                        db.execute(
-                            "INSERT INTO processed_msgs (msg_id, created_at) VALUES (?, ?)",
-                            (msg_id, datetime.datetime.now().isoformat())
-                        )
-                        db.execute(
-                            "DELETE FROM processed_msgs WHERE created_at < ?",
-                            ((datetime.datetime.now() - datetime.timedelta(hours=1)).isoformat(),)
-                        )
-                        db.commit()
+                        recent_messages[dedup_key] = now_ts
+                        if len(recent_messages) > 500:
+                            cutoff = now_ts - 60
+                            recent_messages.clear()
                     user_id = msg["from_id"]
                     text = msg.get("text", "")
                     if text:
