@@ -101,7 +101,7 @@ def ai(system_prompt, user_text, max_tokens=200):
                 "Content-Type": "application/json"
             },
             json={
-                "model": "llama3-8b-8192",
+                "model": "llama-3.3-70b-versatile",
                 "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_text}
