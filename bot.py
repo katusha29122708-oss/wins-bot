@@ -4,16 +4,14 @@ import threading
 import datetime
 import sqlite3
 import requests
-from groq import Groq
 
-VK_TOKEN = os.environ.get("vk1.a.RfVgt3N_nMfp3Fb_OUo2_DDJgr3UnDUAe_C5ASkDAmBXQYSJUxsIe14jhOuK6E0TfVnHUVarQYpaSkYUWc57OBo9LBV6ToRMldxGyc5pM3FXIQvkHUHi0d44MGi7oDeHfTa1hMqRrIW1jcBg1Pw7zbQ8omwIL3puIDAiGXmFdRRo9lPjDtfB1feijSuqcYIeiE1kLy-TMHUVri5pNxxaUQ")
-GROQ_API_KEY = os.environ.get("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")
-VK_GROUP_ID = os.environ.get("236136575")
+VK_TOKEN = os.environ.get("VK_TOKEN")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+VK_GROUP_ID = os.environ.get("VK_GROUP_ID")
 
 VK_API = "https://api.vk.com/method"
 VK_VERSION = "5.131"
-
-groq_client = Groq(api_key=GROQ_API_KEY)
+GROQ_API = "https://api.groq.com/openai/v1/chat/completions"
 
 
 # ─── База данных ───────────────────────────────────────────────
@@ -101,15 +99,23 @@ def get_long_poll_server():
 
 def ai(system_prompt, user_text, max_tokens=200):
     try:
-        resp = groq_client.chat.completions.create(
-            model="llama3-8b-8192",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_text}
-            ],
-            max_tokens=max_tokens
+        resp = requests.post(
+            GROQ_API,
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "llama3-8b-8192",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_text}
+                ],
+                "max_tokens": max_tokens
+            },
+            timeout=15
         )
-        return resp.choices[0].message.content.strip()
+        return resp.json()["choices"][0]["message"]["content"].strip()
     except Exception as e:
         print(f"Groq error: {e}")
         return None
